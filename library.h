@@ -11,14 +11,13 @@ namespace fs = std::experimental::filesystem;
 
 class library {
 public:
-    using external_symbols = std::vector<std::experimental::string_view>;
     using external_symbol_map = std::unordered_map<std::string, uintptr_t>;
 
     explicit library(fs::path path);
 
     void read_coffs_exports();
 
-    external_symbols get_unresolved_external_symbols() const;
+    std::vector<std::experimental::string_view> get_unresolved_external_symbols() const;
     void resolve_external_symbols(external_symbol_map const &esm);
 
     std::unordered_map<std::string, std::pair<coff&, uintptr_t>> const& get_coffs_exports() const { return coffs_exports_; }

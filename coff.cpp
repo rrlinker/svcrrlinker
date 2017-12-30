@@ -69,8 +69,8 @@ bool coff::symbol_is_exported(IMAGE_SYMBOL const &symbol) const {
     return symbol.SectionNumber > 0;
 }
 
-coff::exports coff::get_exports() const {
-    exports exs;
+std::unordered_map<std::experimental::string_view, uintptr_t> coff::get_exports() const {
+    std::unordered_map<std::experimental::string_view, uintptr_t> exs;
     for (int i = 0; i < symbols_.size(); i++) {
         IMAGE_SYMBOL const &symbol = symbols_[i];
         if (!symbol_is_exported(symbol))
@@ -88,13 +88,13 @@ coff::exports coff::get_exports() const {
     return exs;
 }
 
-coff::imports coff::get_imports() const {
-    imports ims;
+std::vector<std::experimental::string_view> coff::get_imports() const {
+    std::vector<std::experimental::string_view> ims;
     for (int i = 0; i < symbols_.size(); i++) {
         IMAGE_SYMBOL const &symbol = symbols_[i];
         if (symbol_is_exported(symbol))
             continue;
-        
+
         auto name = get_symbol_name(symbol);
         ims.emplace_back(name);
 
@@ -114,3 +114,13 @@ std::vector<char> coff::read_section_data(IMAGE_SECTION_HEADER const &section) {
     file_.read(data.data(), section.SizeOfRawData);
     return data;
 }
+
+
+void coff::get_relocations() const {
+    for (auto const& section : sections_) {
+        std::vector<IMAGE_RELOCATION> relocations(section.NumberOfRelocations);
+        file_.seekg(section.PointerToRelocations, file_.beg);
+        file_.read(reinterpret_cast<char*>(relocations.data()), section.NumberOfRelocations * sizeof(IMAGE_RELOCATION));
+    }
+}
+

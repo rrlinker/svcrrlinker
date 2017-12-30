@@ -5,7 +5,7 @@ library::library(fs::path path)
 {
     for (auto &p : fs::directory_iterator(path_)) {
         if (fs::is_regular_file(p))
-            coffs_.emplace_back(p);
+            coffs_.emplace_back(coff(p));
     }
 }
 
@@ -21,7 +21,7 @@ void library::read_coffs_exports() {
     }
 }
 
-library::external_symbols library::get_unresolved_external_symbols() const {
+std::vector<std::experimental::string_view> library::get_unresolved_external_symbols() const {
     return coffs_[0].get_imports();
 }
 
