@@ -3,8 +3,8 @@
 #include <courier.h>
 #include "library.h"
 
-class librarian {
+class Librarian {
 public:
 
-    void link(rrl::Courier &courier, library const &m);
+    void link(rrl::Courier &courier, Library &library);
 };

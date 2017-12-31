@@ -11,16 +11,20 @@ UXConnection::UXConnection(int fd)
     : Connection(fd)
 {}
 
-void UXConnection::connect(Address const &address) {
+UXConnection::~UXConnection() {
+    disconnect();
+}
+
+void UXConnection::connect(Address const&) {
+    throw std::logic_error("`connect` member function of UXConnection class is not implemented");
 }
 
 void UXConnection::disconnect() {
-    int err;
-
-    if (close(socket_) != 0)
-        throw UnixException(errno);
-
-    socket_ = -1;
+    if (socket_ != -1) {
+        if (close(socket_) != 0)
+            throw UnixException(errno);
+        socket_ = -1;
+    }
 }
 
 void UXConnection::send(const std::byte *data, uint64_t length) {
@@ -40,3 +44,4 @@ void UXConnection::recv(std::byte *data, uint64_t length) {
     if (res == -1 || res == 0)
         throw UnixException(errno);
 }
+

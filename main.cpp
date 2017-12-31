@@ -59,15 +59,19 @@ int main(int argc, const char *argv[]) {
         return -1;
     }
 
-    UXConnection conn(fd);
-    Courier courier(conn);
+    try {
+        UXConnection conn(fd);
+        Courier courier(conn);
 
-    msg::OK msg_ok;
-    courier.send(msg_ok);
+        msg::OK msg_ok;
+        courier.send(msg_ok);
 
-    library lib(library_path);
-    librarian libian;
-    libian.link(courier, lib);
+        Library library(library_path);
+        Librarian librarian;
+        librarian.link(courier, library);
+    } catch (std::exception const &e) {
+        std::cerr << e.what() << '\n';
+    }
 
     return 0;
 }

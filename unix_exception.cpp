@@ -7,3 +7,4 @@ UnixException::UnixException(int errnum)
     : std::runtime_error(strerror(errnum))
     , errnum_(errnum)
 {}
+

@@ -2,28 +2,25 @@
 
 #include <vector>
 #include <unordered_map>
-#include <experimental/string_view>
 #include <experimental/filesystem>
 
 #include "coff.h"
 
 namespace fs = std::experimental::filesystem;
 
-class library {
+class Library {
 public:
-    using external_symbol_map = std::unordered_map<std::string, uintptr_t>;
-
-    explicit library(fs::path path);
+    explicit Library(fs::path path);
 
     void read_coffs_exports();
 
-    std::vector<std::experimental::string_view> get_unresolved_external_symbols() const;
-    void resolve_external_symbols(external_symbol_map const &esm);
+    std::vector<std::string> get_unresolved_external_symbols() const;
+    void resolve_external_symbol(std::string const &symbol, uint64_t address);
 
-    std::unordered_map<std::string, std::pair<coff&, uintptr_t>> const& get_coffs_exports() const { return coffs_exports_; }
+    std::unordered_map<std::string, std::pair<COFF&, uint64_t>> const& get_coffs_exports() const { return coffs_exports_; }
 private:
     fs::path path_;
 
-    std::vector<coff> coffs_;
-    std::unordered_map<std::string, std::pair<coff&, uintptr_t>> coffs_exports_;
+    std::vector<COFF> coffs_;
+    std::unordered_map<std::string, std::pair<COFF&, uint64_t>> coffs_exports_;
 };
