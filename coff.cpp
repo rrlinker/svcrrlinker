@@ -33,9 +33,7 @@ void COFF::read_symbols() {
     if (file_header_.NumberOfSymbols) {
         symbols_.resize(file_header_.NumberOfSymbols);
         file_.seekg(file_header_.PointerToSymbolTable, file_.beg);
-        for (auto &symbol : symbols_) {
-            binary_read(file_, symbol);
-        }
+        file_.read(symbols_.data(), symbols_.size() * sizeof(IMAGE_SYMBOL));
     }
 }
 
