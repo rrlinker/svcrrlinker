@@ -24,3 +24,4 @@ private:
     std::vector<COFF> coffs_;
     std::unordered_map<std::string, std::pair<COFF&, uint64_t>> coffs_exports_;
 };
+
