@@ -8,61 +8,78 @@ using namespace rrl;
 void Librarian::link(Courier &courier, Library &library) {
     handle_external_symbols(courier, library);
     handle_memory_spaces(courier, library);
+    commit_memory_spaces(courier, library);
+
+    library.for_each_coff([&courier](COFF &coff) {
+        for (auto const &section : coff.sections()) {
+            msg::Execute msg_execute;
+            msg_execute.body().value = section.actual_address;
+            courier.send(msg_execute);
+        }
+    });
 
     msg::OK msg_ok;
     courier.send(msg_ok);
 }
 
 void Librarian::handle_external_symbols(Courier &courier, Library &library) {
-    // TODO: library.resolve_internal_symbols();
+    library.resolve_internal_symbols();
 
-    auto external_symbols = library.get_unresolved_external_symbols();
-    sanitize_symbols(external_symbols);
-    msg::ResolveExternalSymbols msg_resolve_symbols;
-    for (auto &symbol : external_symbols) {
-        msg_resolve_symbols.body().emplace_back(std::make_pair("kernel32.dll", symbol));
-    }
-    courier.send(msg_resolve_symbols);
+    library.for_each_coff([&courier](COFF &coff) {
+        auto external_symbols = coff.import_symbols();
+        msg::ResolveExternalSymbols msg_resolve_symbols;
+        for (auto const& [symbol, _] : external_symbols) {
+            msg_resolve_symbols.body().emplace_back(std::make_pair("kernel32.dll", sanitize_symbol(symbol)));
+        }
+        courier.send(msg_resolve_symbols);
 
-    auto resolved_symbols = courier.receive().cast<msg::ResolvedSymbols>();
-    if (resolved_symbols.body().size() != external_symbols.size()) {
-        throw std::logic_error("resolved_symbols.body().size() != external_symbols.size()");
-    }
-    for (int i = 0; i < external_symbols.size(); i++) {
-        auto const &symbol = external_symbols[i];
-        auto address = resolved_symbols[i];
-        library.resolve_external_symbol(symbol, address);
-    }
-
+        auto resolved_symbols = courier.receive().cast<msg::ResolvedSymbols>();
+        if (resolved_symbols.body().size() != external_symbols.size()) {
+            throw std::logic_error("resolved_symbols.body().size() != external_symbols.size()");
+        }
+        auto resolved_symbol = resolved_symbols.body().begin();
+        for (auto const& [symbol, _] : external_symbols) {
+            coff.resolve_external_symbol(symbol, *resolved_symbol++);
+        }
+    });
 }
 
 void Librarian::handle_memory_spaces(Courier &courier, Library &library) {
-    auto memory_spaces = library.get_memory_spaces();
-    msg::ReserveMemorySpaces msg_reserve_memory_spaces;
-    msg_reserve_memory_spaces.body() = std::move(memory_spaces);
-    courier.send(msg_reserve_memory_spaces);
+    library.for_each_coff([&courier](COFF &coff) {
+        msg::ReserveMemorySpaces msg_reserve_memory_spaces;
+        for (auto &section : coff.sections()) {
+            msg_reserve_memory_spaces.body().emplace_back(0, section.header.SizeOfRawData);
+        }
+        courier.send(msg_reserve_memory_spaces);
 
-    auto reserved_memory = courier.receive().cast<msg::ReservedMemory>();
-    if (reserved_memory.body().size() != memory_spaces.size()) {
-        throw std::logic_error("reserved_memory.body().size() != memory_spaces.size()");
-    }
-    for (int i = 0; i < memory_spaces.size(); i++) {
-        auto original_address = memory_spaces[i].first;
-        // auto size = memory_spaces[i].second;
-        auto reserved_address = reserved_memory[i];
-        library.assign_memory_space(original_address, reserved_address);
-    }
+        auto reserved_memory = courier.receive().cast<msg::ReservedMemory>();
+        auto actual_address = reserved_memory.body().begin();
+        for (auto &section : coff.sections()) {
+            coff.perform_relocations(section, *actual_address++);
+        }
+        if (actual_address != reserved_memory.body().end()) {
+            throw std::logic_error("actual_address != reserved_memory.body().end()");
+        }
+    });
 }
 
-void Librarian::sanitize_symbols(std::vector<std::string> &symbols) {
-    for (auto &symbol : symbols)
-        sanitize_symbol(symbol);
+void Librarian::commit_memory_spaces(rrl::Courier &courier, Library &library) {
+    library.for_each_coff([&courier](COFF &coff) {
+        for (auto const &section : coff.sections()) {
+            msg::CommitMemory msg_commit_memory;
+            msg_commit_memory.body().address = section.actual_address;
+            msg_commit_memory.body().memory = section.raw_data;
+            msg_commit_memory.body().protection = 0x40;
+            courier.send(msg_commit_memory);
+        }
+    });
 }
 
-void Librarian::sanitize_symbol(std::string &symbol) {
+std::string Librarian::sanitize_symbol(std::string symbol) {
     std::regex sanitizer("^(__imp__|_)?(\\w+)(@\\d+)?$");
     std::smatch match;
     if (std::regex_search(symbol, match, sanitizer))
-        symbol = match[2];
+        return match[2];
+    return symbol;
 }
 

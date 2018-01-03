@@ -59,15 +59,25 @@ int main(int argc, const char *argv[]) {
         return -1;
     }
 
+    std::cerr << "svclinker started" << std::endl;
+
     try {
+        std::cerr << "creating connection" << std::endl;
         UXConnection conn(fd);
+
+        std::cerr << "creating courier" << std::endl;
         Courier courier(conn);
 
+        std::cerr << "sending OK..." << std::endl;
         msg::OK msg_ok;
         courier.send(msg_ok);
 
+        std::cerr << "creating library" << std::endl;
         Library library(library_path);
+
         Librarian librarian;
+
+        std::cerr << "linking..." << std::endl;
         librarian.link(courier, library);
     } catch (std::exception const &e) {
         std::cerr << e.what() << '\n';

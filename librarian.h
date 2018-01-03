@@ -1,5 +1,6 @@
 #pragma once
 
+
 #include <vector>
 #include <string>
 
@@ -11,11 +12,11 @@ public:
 
     void link(rrl::Courier &courier, Library &library);
 
-    void sanitize_symbols(std::vector<std::string> &symbols);
-    void sanitize_symbol(std::string &symbol);
+    static std::string sanitize_symbol(std::string symbol);
 
 private:
     void handle_external_symbols(rrl::Courier &courier, Library &library);
     void handle_memory_spaces(rrl::Courier &courier, Library &library);
+    void commit_memory_spaces(rrl::Courier &courier, Library &library);
 };
 

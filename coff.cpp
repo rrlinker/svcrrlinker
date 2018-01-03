@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "coff.h"
 
 template<typename T>
@@ -12,9 +14,9 @@ COFF::COFF(fs::path path) :
     file_.open(path_);
 
     read_file_header();
-    read_sections_headers();
-    read_symbols();
+    read_sections();
     read_string_table();
+    read_symbols();
 }
 
 void COFF::read_file_header() {
@@ -22,19 +24,44 @@ void COFF::read_file_header() {
     binary_read(file_, file_header_);
 }
 
-void COFF::read_sections_headers() {
+void COFF::read_sections() {
     file_.seekg(sizeof(IMAGE_FILE_HEADER), file_.beg);
     sections_.resize(file_header_.NumberOfSections);
     for (auto &section : sections_) {
-        binary_read(file_, section);
+        binary_read(file_, section.header);
+        read_section_raw_data(section);
+        read_section_relocations(section);
     }
 }
+
+void COFF::read_section_raw_data(COFF::Section &section) {
+    section.raw_data.resize(section.header.SizeOfRawData);
+    file_.seekg(section.header.PointerToRawData, file_.beg);
+    file_.read(reinterpret_cast<char*>(section.raw_data.data()), section.raw_data.size());
+}
+
+void COFF::read_section_relocations(COFF::Section &section) {
+    section.relocations.resize(section.header.NumberOfRelocations);
+    file_.seekg(section.header.PointerToRelocations, file_.beg);
+    file_.read(reinterpret_cast<char*>(section.relocations.data()), section.relocations.size() * sizeof(IMAGE_RELOCATION));
+}
+
 void COFF::read_symbols() {
     if (file_header_.NumberOfSymbols) {
         symbols_.resize(file_header_.NumberOfSymbols);
         file_.seekg(file_header_.PointerToSymbolTable, file_.beg);
-        file_.read(symbols_.data(), symbols_.size() * sizeof(IMAGE_SYMBOL));
+        file_.read(reinterpret_cast<char*>(symbols_.data()), symbols_.size() * sizeof(IMAGE_SYMBOL));
     }
+    for (auto const &symbol : symbols_) {
+        auto const &name = get_symbol_name(symbol);
+        auto pair = std::make_pair(name, &symbol);
+        if (symbol_is_exported(symbol))
+            export_symbols_.insert(pair);
+        else
+            import_symbols_.insert(pair);
+        symbol_map_.emplace(std::make_pair(name, symbol_map_.size()));
+    }
+    symbols_addresses_.resize(symbols_.size());
 }
 
 void COFF::read_string_table() {
@@ -67,61 +94,40 @@ bool COFF::symbol_is_exported(IMAGE_SYMBOL const &symbol) const {
     return symbol.SectionNumber > 0;
 }
 
-std::unordered_map<std::string, uintptr_t> COFF::get_exports() const {
-    std::unordered_map<std::string, uintptr_t> exs;
-    for (int i = 0; i < symbols_.size(); i++) {
-        IMAGE_SYMBOL const &symbol = symbols_[i];
-        if (!symbol_is_exported(symbol))
-            continue;
+void COFF::resolve_external_symbol(std::string const &symbol_name, uint64_t address) {
+    auto symbol_id = symbol_map_[symbol_name];
+    symbols_addresses_[symbol_id] = address;
+}
 
-        auto name = get_symbol_name(symbol);
-        exs.emplace(name, symbol.Value);
+void COFF::perform_relocations(COFF::Section &section, uint64_t address) {
+    section.actual_address = address;
+    for (auto const &relocation : section.relocations) {
+        auto const symbol_address = symbols_addresses_[relocation.SymbolTableIndex];
+        switch (relocation.Type) {
+            case IMAGE_REL_I386_ABSOLUTE:
+                std::cout << "ABSOLUTE" << relocation.VirtualAddress << std::endl;
+                *reinterpret_cast<DWORD*>(section.raw_data.data() + relocation.VirtualAddress) = address;
+                break;
+            case IMAGE_REL_I386_DIR32:
+                std::cout << "DIR32" << relocation.VirtualAddress << std::endl;
+                *reinterpret_cast<DWORD*>(section.raw_data.data() + relocation.VirtualAddress) = symbol_address;
+                break;
+            case IMAGE_REL_I386_REL32:
+                std::cout << "REL32" << relocation.VirtualAddress << std::endl;
+                *reinterpret_cast<DWORD*>(section.raw_data.data() + relocation.VirtualAddress) += symbol_address - address - 10;
+                break;
 
-        // No Aux Symbols are supported yet
-        if (symbol.NumberOfAuxSymbols) {
-            std::cerr << "COFF(" << path_ << ") Ignoring " << symbol.NumberOfAuxSymbols << " AUX symbols @ " << i << '\n';
-            i += symbol.NumberOfAuxSymbols;
+            case IMAGE_REL_I386_DIR16:
+            case IMAGE_REL_I386_REL16:
+            case IMAGE_REL_I386_DIR32NB:
+            case IMAGE_REL_I386_SEG12:
+            case IMAGE_REL_I386_SECTION:
+            case IMAGE_REL_I386_SECREL:
+            case IMAGE_REL_I386_TOKEN:
+            case IMAGE_REL_I386_SECREL7:
+                throw std::logic_error("unsupported relocation type");
+                break;
         }
     }
-    return exs;
-}
-
-std::vector<std::string> COFF::get_imports() const {
-    std::vector<std::string> ims;
-    for (int i = 0; i < symbols_.size(); i++) {
-        IMAGE_SYMBOL const &symbol = symbols_[i];
-        if (symbol_is_exported(symbol))
-            continue;
-
-        auto name = get_symbol_name(symbol);
-        ims.emplace_back(name);
-
-        // No Aux Symbols are supported yet
-        if (symbol.NumberOfAuxSymbols) {
-            std::cerr << "COFF(" << path_ << ") Ignoring " << symbol.NumberOfAuxSymbols << " AUX symbols @ " << i << '\n';
-            i += symbol.NumberOfAuxSymbols;
-        }
-    }
-    return ims;
-}
-
-std::vector<char> COFF::read_section_data(IMAGE_SECTION_HEADER const &section) {
-    std::vector<char> data;
-    data.resize(section.SizeOfRawData);
-    file_.seekg(section.PointerToRawData, file_.beg);
-    file_.read(data.data(), section.SizeOfRawData);
-    return data;
-}
-
-
-void COFF::get_relocations() {
-    for (auto const& section : sections_) {
-        std::vector<IMAGE_RELOCATION> relocations(section.NumberOfRelocations);
-        file_.seekg(section.PointerToRelocations, file_.beg);
-        file_.read(reinterpret_cast<char*>(relocations.data()), section.NumberOfRelocations * sizeof(IMAGE_RELOCATION));
-    }
-}
-
-void COFF::resolve_external_symbol(std::string const &symbol, uint64_t address) {
 }
 

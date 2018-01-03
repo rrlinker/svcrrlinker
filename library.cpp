@@ -9,23 +9,12 @@ Library::Library(fs::path path)
     }
 }
 
-void Library::read_coffs_exports() {
-    for (auto &c : coffs_) {
-        for (auto const& [name, value] : c.get_exports()) {
-            coffs_exports_.emplace(
-                std::piecewise_construct,
-                std::forward_as_tuple(name),
-                std::forward_as_tuple(c, value)
-            );
-        }
-    }
+void Library::resolve_internal_symbols() {
+    // TODO
 }
 
-std::vector<std::string> Library::get_unresolved_external_symbols() const {
-    return coffs_[0].get_imports();
-}
-
-void Library::resolve_external_symbol(std::string const &symbol, uint64_t address) {
-    coffs_[0].resolve_external_symbol(symbol, address);
+void Library::for_each_coff(std::function<void(COFF&)> callback) {
+    for (auto &coff : coffs_)
+        callback(coff);
 }
 
