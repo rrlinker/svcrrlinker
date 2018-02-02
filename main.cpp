@@ -19,10 +19,6 @@ using namespace rrl;
 namespace fs = std::experimental::filesystem;
 
 int main(int argc, const char *argv[]) {
-    std::cout << "PRESS ENTER TO CONTINUE ...\n";
-    std::string tmp;
-    std::cin >> tmp;
-
     if (argc != 4) {
         const char *program = argc > 0 ? argv[0] : "svclinker";
         std::cerr << "usage: " << program << " <file descriptor of socket> <symbol resolver unix server> <library path>\n"
@@ -59,30 +55,22 @@ int main(int argc, const char *argv[]) {
     if (!arguments_are_valid)
         return 2;
 
-    std::cerr << "svclinker started" << std::endl;
-
     try {
-        std::cerr << "creating connection" << std::endl;
         PosixConnection conn(fd);
 
-        std::cerr << "creating resolver connection" << std::endl;
         UnixConnection resolver_conn;
         resolver_conn.connect(resolver_path);
 
-        std::cerr << "creating courier" << std::endl;
         Courier courier(conn);
         Courier resolver_courier(resolver_conn);
 
-        std::cerr << "sending OK..." << std::endl;
         msg::OK msg_ok;
         courier.send(msg_ok);
 
-        std::cerr << "creating library" << std::endl;
         Library library(library_path);
 
         Librarian librarian(resolver_courier);
 
-        std::cerr << "linking..." << std::endl;
         librarian.link(courier, library);
     } catch (std::exception const &e) {
         std::cerr << e.what() << '\n';

@@ -22,6 +22,7 @@ class COFF {
             std::vector<IMAGE_RELOCATION> relocations;
             uint64_t reserved_address;
 
+            bool discardable();
             DWORD protection();
             void perform_relocations(std::vector<uint64_t> const &symbols_addresses);
 

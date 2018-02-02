@@ -1,6 +1,6 @@
 #include "library.h"
 
-char const *Library::ENTRY_POINT_NAME = "_rrl_main";
+char const *Library::ENTRY_POINT_NAME = "_rrl_main@4";
 
 Library::Library(fs::path path)
     : path_(std::move(path))
@@ -14,7 +14,7 @@ Library::Library(fs::path path)
 void Library::reserve_memory_spaces(std::function<uint64_t(uint64_t const)> const &applier) {
     for (auto &coff : coffs_) {
         for (auto &section : coff.sections()) {
-            if (section.header.SizeOfRawData) {
+            if (section.header.SizeOfRawData && !section.discardable()) {
                 section.reserved_address = applier(section.header.SizeOfRawData);
             }
         }
@@ -81,7 +81,7 @@ void Library::perform_relocations() {
 void Library::commit_memory_spaces(std::function<void(uint64_t address, DWORD protection, std::vector<std::byte> const data)> performer) {
     for (auto &coff : coffs_) {
         for (auto &section : coff.sections()) {
-            if (section.reserved_address && section.raw_data.size()) {
+            if (section.reserved_address && section.raw_data.size() && !section.discardable()) {
                 performer(section.reserved_address, section.protection(), section.raw_data);
             }
         }
@@ -92,12 +92,10 @@ uint64_t Library::get_entry_point() {
     fill_export_symbol_map();
     auto it = export_symbol_map_.find(ENTRY_POINT_NAME);
     if (it != export_symbol_map_.end()) {
-        std::cerr << "ENTRY POINT EXISTS" << std::endl;
         auto &symbol_name = it->first;
         auto &coff = it->second;
         return coff.get_symbol_address_by_name(symbol_name);
     } else {
-        std::cerr << "NO ENTRY POINT FOUND" << std::endl;
         return 0;
     }
 }

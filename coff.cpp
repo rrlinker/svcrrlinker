@@ -29,9 +29,7 @@ void COFF::read_sections() {
         auto &section = sections_[i];
         file_.seekg(IMAGE_SIZEOF_FILE_HEADER + i * IMAGE_SIZEOF_SECTION_HEADER, file_.beg);
         binary_read(file_, section.header);
-        if ((section.header.Characteristics & IMAGE_SCN_MEM_DISCARDABLE)
-         || (section.header.Characteristics & IMAGE_SCN_LNK_REMOVE))
-        {
+        if (section.discardable()) {
             // Don't read section contents
             continue;
         }
@@ -211,6 +209,11 @@ DWORD const COFF::Section::section2page_protection[2][2][2] = {
         },
     },
 };
+
+bool COFF::Section::discardable() {
+    return (header.Characteristics & IMAGE_SCN_MEM_DISCARDABLE)
+        || (header.Characteristics & IMAGE_SCN_LNK_REMOVE);
+}
 
 DWORD COFF::Section::protection() {
     return section2page_protection
