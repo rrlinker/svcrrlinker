@@ -114,12 +114,15 @@ IMAGE_SYMBOL& COFF::get_symbol_by_name(std::string_view name) {
 }
 
 uint64_t& COFF::get_symbol_address_by_name(std::string_view name) {
-    return symbols_addresses_[symbol_map_[name]];
+    return symbols_addresses_.at(symbol_map_.at(name));
+}
+
+uint64_t COFF::get_symbol_address_by_name(std::string_view name) const {
+    return symbols_addresses_.at(symbol_map_.at(name));
 }
 
 void COFF::resolve_external_symbol(std::string_view symbol, COFF const &exporter_coff) {
-    // TODO
-    // get_symbol_address_by_name(symbol) = ...;
+    get_symbol_address_by_name(symbol) = exporter_coff.get_symbol_address_by_name(symbol);
 }
 
 void COFF::resolve_external_symbol(std::string_view symbol_name, uint64_t address) {

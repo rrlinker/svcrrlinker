@@ -48,6 +48,7 @@ class COFF {
 
         IMAGE_SYMBOL& get_symbol_by_name(std::string_view name);
         uint64_t& get_symbol_address_by_name(std::string_view name);
+        uint64_t get_symbol_address_by_name(std::string_view name) const;
 
     private:
         void read_file_header();

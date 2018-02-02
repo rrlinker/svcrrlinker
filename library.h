@@ -15,6 +15,7 @@ public:
     explicit Library(fs::path path);
 
     void reserve_memory_spaces(std::function<uint64_t(uint64_t)> const &applier);
+    void resolve_symbols_addresses();
     void resolve_internal_symbols();
     void resolve_external_symbols(std::function<uint64_t(std::string_view const)> const &resolver);
     void perform_relocations();

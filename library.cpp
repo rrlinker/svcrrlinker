@@ -21,6 +21,12 @@ void Library::reserve_memory_spaces(std::function<uint64_t(uint64_t const)> cons
     }
 }
 
+void Library::resolve_symbols_addresses() {
+    for (auto &coff : coffs_) {
+        coff.resolve_symbols_addresses();
+    }
+}
+
 void Library::resolve_internal_symbols() {
     fill_export_symbol_map();
     unresolved_external_symbols_.clear();
@@ -63,9 +69,6 @@ void Library::fill_export_symbol_map() {
 void Library::resolve_external_symbols(std::function<uint64_t(std::string_view const)> const &resolver) {
     for (auto& [symbol_name, coff] : unresolved_external_symbols_) {
         coff.resolve_external_symbol(symbol_name, resolver(symbol_name));
-    }
-    for (auto &coff : coffs_) {
-        coff.resolve_symbols_addresses();
     }
 }
 

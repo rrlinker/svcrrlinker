@@ -20,6 +20,7 @@ public:
 
 private:
     void reserve_memory_spaces(rrl::Courier &courier, Library &library);
+    void resolve_symbols_addresses(Library &library);
     void resolve_internal_symbols(Library &library);
     void resolve_external_symbols(rrl::Courier &courier, Library &library);
     void perform_relocations(Library &library);

@@ -11,6 +11,7 @@ Librarian::Librarian(rrl::Courier &resolver_courier)
 
 void Librarian::link(Courier &courier, Library &library) {
     reserve_memory_spaces(courier, library);
+    resolve_symbols_addresses(library);
     resolve_internal_symbols(library);
     resolve_external_symbols(courier, library);
     perform_relocations(library);
@@ -19,6 +20,10 @@ void Librarian::link(Courier &courier, Library &library) {
 
     msg::OK msg_ok;
     courier.send(msg_ok);
+}
+
+void Librarian::resolve_symbols_addresses(Library &library) {
+    library.resolve_symbols_addresses();
 }
 
 void Librarian::resolve_internal_symbols(Library &library) {
