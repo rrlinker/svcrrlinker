@@ -101,7 +101,7 @@ std::string_view COFF::get_symbol_name(IMAGE_SYMBOL const &symbol) const {
 
 bool COFF::symbol_is_exported(IMAGE_SYMBOL const &symbol) const {
     return (symbol.StorageClass == IMAGE_SYM_CLASS_EXTERNAL && symbol.SectionNumber > 0)
-        || (symbol.StorageClass == IMAGE_SYM_CLASS_STATIC && symbol.Value != 0);
+        || (symbol.StorageClass == IMAGE_SYM_CLASS_STATIC && symbol.SectionNumber > 0 && symbol.Value != 0);
 }
 
 bool COFF::symbol_is_imported(IMAGE_SYMBOL const &symbol) const {
