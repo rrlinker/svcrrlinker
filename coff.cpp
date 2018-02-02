@@ -9,18 +9,12 @@ std::istream& binary_read(std::istream &is, T &out) {
 
 COFF::COFF(fs::path const &path)
 {
-    std::cerr << "file_ exceptions" << std::endl;
     file_.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-    std::cerr << "file_ open " << path << std::endl;
     file_.open(path);
 
-    std::cerr << "read_file_header" << std::endl;
     read_file_header();
-    std::cerr << "read_sections" << std::endl;
     read_sections();
-    std::cerr << "read_string_table" << std::endl;
     read_string_table();
-    std::cerr << "read_symbols" << std::endl;
     read_symbols();
 }
 
@@ -30,9 +24,10 @@ void COFF::read_file_header() {
 }
 
 void COFF::read_sections() {
-    file_.seekg(sizeof(IMAGE_FILE_HEADER), file_.beg);
     sections_.resize(file_header_.NumberOfSections);
-    for (auto &section : sections_) {
+    for (size_t i = 0; i < sections_.size(); i++) {
+        auto &section = sections_[i];
+        file_.seekg(IMAGE_SIZEOF_FILE_HEADER + i * IMAGE_SIZEOF_SECTION_HEADER, file_.beg);
         binary_read(file_, section.header);
         read_section_raw_data(section);
         read_section_relocations(section);
@@ -49,14 +44,14 @@ void COFF::read_section_relocations(COFF::Section &section) {
     if (section.header.NumberOfRelocations) {
         section.relocations.resize(section.header.NumberOfRelocations);
         file_.seekg(section.header.PointerToRelocations, file_.beg);
-        file_.read(reinterpret_cast<char*>(section.relocations.data()), section.relocations.size() * sizeof(IMAGE_RELOCATION));
+        file_.read(reinterpret_cast<char*>(section.relocations.data()), section.relocations.size() * IMAGE_SIZEOF_RELOCATION);
     }
 }
 
 void COFF::read_string_table() {
     std::streamoff string_table_offset =
         file_header_.PointerToSymbolTable
-        + file_header_.NumberOfSymbols * sizeof(IMAGE_SYMBOL);
+        + file_header_.NumberOfSymbols * IMAGE_SIZEOF_SYMBOL;
 
     DWORD sizeof_table;
 
@@ -73,7 +68,7 @@ void COFF::read_symbols() {
     if (file_header_.NumberOfSymbols) {
         symbols_.resize(file_header_.NumberOfSymbols);
         file_.seekg(file_header_.PointerToSymbolTable, file_.beg);
-        file_.read(reinterpret_cast<char*>(symbols_.data()), symbols_.size() * sizeof(IMAGE_SYMBOL));
+        file_.read(reinterpret_cast<char*>(symbols_.data()), symbols_.size() * IMAGE_SIZEOF_SYMBOL);
     }
     for (size_t symid = 0; symid < symbols_.size(); symid++) {
         auto &symbol = symbols_[symid];
