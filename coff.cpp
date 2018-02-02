@@ -29,6 +29,12 @@ void COFF::read_sections() {
         auto &section = sections_[i];
         file_.seekg(IMAGE_SIZEOF_FILE_HEADER + i * IMAGE_SIZEOF_SECTION_HEADER, file_.beg);
         binary_read(file_, section.header);
+        if ((section.header.Characteristics & IMAGE_SCN_MEM_DISCARDABLE)
+         || (section.header.Characteristics & IMAGE_SCN_LNK_REMOVE))
+        {
+            // Don't read section contents
+            continue;
+        }
         read_section_raw_data(section);
         read_section_relocations(section);
     }
@@ -76,7 +82,7 @@ void COFF::read_symbols() {
         auto pair = std::make_pair(name, symbol);
         if (symbol_is_exported(symbol))
             export_symbols_.emplace(std::piecewise_construct, std::forward_as_tuple(name), std::forward_as_tuple(symbol));
-        else
+        else if (symbol_is_imported(symbol))
             import_symbols_.emplace(std::piecewise_construct, std::forward_as_tuple(name), std::forward_as_tuple(symbol));
         symbol_map_.emplace(std::make_pair(name, symid));
     }
@@ -94,7 +100,13 @@ std::string_view COFF::get_symbol_name(IMAGE_SYMBOL const &symbol) const {
 }
 
 bool COFF::symbol_is_exported(IMAGE_SYMBOL const &symbol) const {
-    return symbol.SectionNumber > 0;
+    return (symbol.StorageClass == IMAGE_SYM_CLASS_EXTERNAL && symbol.SectionNumber > 0)
+        || (symbol.StorageClass == IMAGE_SYM_CLASS_STATIC && symbol.Value != 0);
+}
+
+bool COFF::symbol_is_imported(IMAGE_SYMBOL const &symbol) const {
+    return symbol.StorageClass == IMAGE_SYM_CLASS_EXTERNAL
+        && symbol.SectionNumber == IMAGE_SYM_UNDEFINED;
 }
 
 IMAGE_SYMBOL& COFF::get_symbol_by_name(std::string_view name) {
@@ -114,10 +126,15 @@ void COFF::resolve_external_symbol(std::string_view symbol_name, uint64_t addres
     get_symbol_address_by_name(symbol_name) = address;
 }
 
-void COFF::resolve_export_symbols_addresses() {
-    for (auto &[symbol_name, symbol] : export_symbols_) {
+void COFF::resolve_symbols_addresses() {
+    for (size_t i = 0; i < symbols_.size(); i++) {
+        auto &symbol = symbols_[i];
+        auto &symbol_address = symbols_addresses_[i];
+        // Import symbols are external, their addresses are resolved using resolve_external_symbol
+        if (symbol_is_imported(symbol))
+            continue;
         // SectionNumber is 1-based index
-        get_symbol_address_by_name(symbol_name) = sections_[symbol.SectionNumber - 1].reserved_address + symbol.Value;
+        symbol_address = sections_[symbol.SectionNumber - 1].reserved_address + symbol.Value;
     }
 }
 
@@ -157,3 +174,48 @@ void COFF::Section::perform_relocations(std::vector<uint64_t> const &symbols_add
         }
     }
 }
+
+DWORD const COFF::Section::section2page_protection[2][2][2] = {
+    // !IMAGE_SCN_MEM_EXECUTE
+    {
+        // !IMAGE_SCN_MEM_EXECUTE && !IMAGE_SCN_MEM_WRITE
+        {
+            // !IMAGE_SCN_MEM_EXECUTE && !IMAGE_SCN_MEM_WRITE && !IMAGE_SCN_MEM_READ
+            PAGE_NOACCESS,
+            // !IMAGE_SCN_MEM_EXECUTE && !IMAGE_SCN_MEM_WRITE && IMAGE_SCN_MEM_READ
+            PAGE_READONLY,
+        },
+        // !IMAGE_SCN_MEM_EXECUTE && IMAGE_SCN_MEM_WRITE
+        {
+            // !IMAGE_SCN_MEM_EXECUTE && IMAGE_SCN_MEM_WRITE && !IMAGE_SCN_MEM_READ
+            PAGE_READWRITE,
+            // !IMAGE_SCN_MEM_EXECUTE && IMAGE_SCN_MEM_WRITE && IMAGE_SCN_MEM_READ
+            PAGE_READWRITE,
+        },
+    },
+    // IMAGE_SCN_MEM_EXECUTE
+    {
+        // IMAGE_SCN_MEM_EXECUTE && !IMAGE_SCN_MEM_WRITE
+        {
+            // IMAGE_SCN_MEM_EXECUTE && !IMAGE_SCN_MEM_WRITE && !IMAGE_SCN_MEM_READ
+            PAGE_EXECUTE,
+            // IMAGE_SCN_MEM_EXECUTE && !IMAGE_SCN_MEM_WRITE && IMAGE_SCN_MEM_READ
+            PAGE_EXECUTE_READ,
+        },
+        // IMAGE_SCN_MEM_EXECUTE && IMAGE_SCN_MEM_WRITE
+        {
+            // IMAGE_SCN_MEM_EXECUTE && IMAGE_SCN_MEM_WRITE && !IMAGE_SCN_MEM_READ
+            PAGE_EXECUTE_READWRITE,
+            // IMAGE_SCN_MEM_EXECUTE && IMAGE_SCN_MEM_WRITE && IMAGE_SCN_MEM_READ
+            PAGE_EXECUTE_READWRITE,
+        },
+    },
+};
+
+DWORD COFF::Section::protection() {
+    return section2page_protection
+        [(header.Characteristics & IMAGE_SCN_MEM_EXECUTE) != 0]
+        [(header.Characteristics & IMAGE_SCN_MEM_WRITE) != 0]
+        [(header.Characteristics & IMAGE_SCN_MEM_READ) != 0];
+}
+

@@ -14,7 +14,9 @@ Library::Library(fs::path path)
 void Library::reserve_memory_spaces(std::function<uint64_t(uint64_t const)> const &applier) {
     for (auto &coff : coffs_) {
         for (auto &section : coff.sections()) {
-            section.reserved_address = applier(section.header.SizeOfRawData);
+            if (section.header.SizeOfRawData) {
+                section.reserved_address = applier(section.header.SizeOfRawData);
+            }
         }
     }
 }
@@ -63,7 +65,7 @@ void Library::resolve_external_symbols(std::function<uint64_t(std::string_view c
         coff.resolve_external_symbol(symbol_name, resolver(symbol_name));
     }
     for (auto &coff : coffs_) {
-        coff.resolve_export_symbols_addresses();
+        coff.resolve_symbols_addresses();
     }
 }
 
@@ -76,7 +78,9 @@ void Library::perform_relocations() {
 void Library::commit_memory_spaces(std::function<void(uint64_t address, DWORD protection, std::vector<std::byte> const data)> performer) {
     for (auto &coff : coffs_) {
         for (auto &section : coff.sections()) {
-            performer(section.reserved_address, 0x40, section.raw_data);
+            if (section.reserved_address && section.raw_data.size()) {
+                performer(section.reserved_address, section.protection(), section.raw_data);
+            }
         }
     }
 }
@@ -85,10 +89,12 @@ uint64_t Library::get_entry_point() {
     fill_export_symbol_map();
     auto it = export_symbol_map_.find(ENTRY_POINT_NAME);
     if (it != export_symbol_map_.end()) {
+        std::cerr << "ENTRY POINT EXISTS" << std::endl;
         auto &symbol_name = it->first;
         auto &coff = it->second;
         return coff.get_symbol_address_by_name(symbol_name);
     } else {
+        std::cerr << "NO ENTRY POINT FOUND" << std::endl;
         return 0;
     }
 }

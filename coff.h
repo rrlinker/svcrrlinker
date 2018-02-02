@@ -22,7 +22,10 @@ class COFF {
             std::vector<IMAGE_RELOCATION> relocations;
             uint64_t reserved_address;
 
+            DWORD protection();
             void perform_relocations(std::vector<uint64_t> const &symbols_addresses);
+
+            static DWORD const section2page_protection[2][2][2];
         };
 
         explicit COFF(fs::path const &path);
@@ -36,10 +39,11 @@ class COFF {
 
         std::string_view get_symbol_name(IMAGE_SYMBOL const &symbol) const;
         bool symbol_is_exported(IMAGE_SYMBOL const &symbol) const;
+        bool symbol_is_imported(IMAGE_SYMBOL const &symbol) const;
 
         void resolve_external_symbol(std::string_view symbol, COFF const &exporter_coff);
         void resolve_external_symbol(std::string_view symbol, uint64_t address);
-        void resolve_export_symbols_addresses();
+        void resolve_symbols_addresses();
         void perform_relocations();
 
         IMAGE_SYMBOL& get_symbol_by_name(std::string_view name);

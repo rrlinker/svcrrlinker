@@ -65,6 +65,7 @@ void Librarian::commit_memory_spaces(rrl::Courier &courier, Library &library) {
 void Librarian::execute_entry_point(rrl::Courier &courier, Library &library) {
     auto entry_point = library.get_entry_point();
     if (entry_point) {
+        std::cerr << "EXECUTING ENTRY POINT ... " << entry_point << std::endl;
         msg::Execute msg_execute;
         msg_execute.body().value = entry_point;
         courier.send(msg_execute);
