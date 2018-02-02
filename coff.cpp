@@ -149,15 +149,12 @@ void COFF::Section::perform_relocations(std::vector<uint64_t> const &symbols_add
         auto const symbol_address = symbols_addresses[relocation.SymbolTableIndex];
         switch (relocation.Type) {
             case IMAGE_REL_I386_ABSOLUTE:
-                std::cout << "ABSOLUTE" << relocation.VirtualAddress << std::endl;
                 *reinterpret_cast<DWORD*>(raw_data.data() + relocation.VirtualAddress) = reserved_address;
                 break;
             case IMAGE_REL_I386_DIR32:
-                std::cout << "DIR32" << relocation.VirtualAddress << std::endl;
                 *reinterpret_cast<DWORD*>(raw_data.data() + relocation.VirtualAddress) += symbol_address;
                 break;
             case IMAGE_REL_I386_REL32:
-                std::cout << "REL32" << relocation.VirtualAddress << std::endl;
                 *reinterpret_cast<DWORD*>(raw_data.data() + relocation.VirtualAddress) += symbol_address - (reserved_address + relocation.VirtualAddress + sizeof(DWORD));
                 break;
 
