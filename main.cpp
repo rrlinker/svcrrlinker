@@ -9,7 +9,8 @@
 #include <fcntl.h>
 
 #include <courier.h>
-#include "ux_connection.h"
+#include "unix_connection.h"
+#include "posix_connection.h"
 #include "librarian.h"
 #include "library.h"
 #include "coff.h"
@@ -18,16 +19,21 @@ using namespace rrl;
 namespace fs = std::experimental::filesystem;
 
 int main(int argc, const char *argv[]) {
-    if (argc != 3) {
+    std::cout << "PRESS ENTER TO CONTINUE ...\n";
+    std::string tmp;
+    std::cin >> tmp;
+
+    if (argc != 4) {
         const char *program = argc > 0 ? argv[0] : "svclinker";
-        std::cerr << "usage: " << program << " <file descriptor of socket> <library path>\n"
+        std::cerr << "usage: " << program << " <file descriptor of socket> <symbol resolver unix server> <library path>\n"
             << "\tLinks (sends) specified library to the socket endpoint." << std::endl;
         return 1;
     }
 
     bool arguments_are_valid = true;
     int fd = atoi(argv[1]);
-    auto library_path = fs::path(argv[2]);
+    auto resolver_path = fs::path(argv[2]);
+    auto library_path = fs::path(argv[3]);
 
     if (!fd) {
         std::cerr << '`' << argv[1] << '`' << " is not a valid number of a file descriptor.\n";
@@ -40,6 +46,11 @@ int main(int argc, const char *argv[]) {
         arguments_are_valid = false;
     }
 
+    if (!fs::is_socket(resolver_path)) {
+        std::cerr << '`' << resolver_path << '`' << " is not a valid path to unix socket.\n";
+        arguments_are_valid = false;
+    }
+
     if (!fs::is_directory(library_path)) {
         std::cerr << '`' << library_path << '`' << " is not a valid path to a library directory.\n";
         arguments_are_valid = false;
@@ -48,25 +59,19 @@ int main(int argc, const char *argv[]) {
     if (!arguments_are_valid)
         return 2;
 
-    auto number_of_files = std::count_if(
-        fs::directory_iterator(library_path),
-        fs::directory_iterator(),
-        static_cast<bool(*)(fs::path const&)>(fs::is_regular_file)
-    );
-
-    if (number_of_files > 1) {
-        std::cerr << "Multi-file libraries are not supported yet.\n";
-        return -1;
-    }
-
     std::cerr << "svclinker started" << std::endl;
 
     try {
         std::cerr << "creating connection" << std::endl;
-        UXConnection conn(fd);
+        PosixConnection conn(fd);
+
+        std::cerr << "creating resolver connection" << std::endl;
+        UnixConnection resolver_conn;
+        resolver_conn.connect(resolver_path);
 
         std::cerr << "creating courier" << std::endl;
         Courier courier(conn);
+        Courier resolver_courier(resolver_conn);
 
         std::cerr << "sending OK..." << std::endl;
         msg::OK msg_ok;
@@ -75,7 +80,7 @@ int main(int argc, const char *argv[]) {
         std::cerr << "creating library" << std::endl;
         Library library(library_path);
 
-        Librarian librarian;
+        Librarian librarian(resolver_courier);
 
         std::cerr << "linking..." << std::endl;
         librarian.link(courier, library);

@@ -3,8 +3,6 @@
 #include <errno.h>
 #include <string.h>
 
-UnixException::UnixException(int errnum)
-    : std::runtime_error(strerror(errnum))
-    , errnum_(errnum)
+UnixException::UnixException(int ec)
+    : std::system_error(ec, std::generic_category())
 {}
-

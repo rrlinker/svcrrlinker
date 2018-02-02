@@ -14,13 +14,22 @@ class Library {
 public:
     explicit Library(fs::path path);
 
+    void reserve_memory_spaces(std::function<uint64_t(uint64_t)> const &applier);
     void resolve_internal_symbols();
-
-    void for_each_coff(std::function<void(COFF&)> callback);
+    void resolve_external_symbols(std::function<uint64_t(std::string_view const)> const &resolver);
+    void perform_relocations();
+    void commit_memory_spaces(std::function<void(uint64_t address, DWORD protection, std::vector<std::byte> const data)> performer);
+    uint64_t get_entry_point();
 
 private:
+    void fill_export_symbol_map();
+
     fs::path path_;
 
     std::vector<COFF> coffs_;
+    std::unordered_map<std::string_view, COFF&> export_symbol_map_;
+    std::unordered_map<std::string_view, COFF&> unresolved_external_symbols_;
+
+    static char const *ENTRY_POINT_NAME;
 };
 

@@ -1,25 +1,27 @@
 #include <iostream>
 
-#include "ux_connection.h"
+#include "posix_connection.h"
 #include "unix_exception.h"
 
 #include <unistd.h>
+#include <sys/socket.h>
+#include <sys/un.h>
 
 using namespace rrl;
 
-UXConnection::UXConnection(int fd)
+PosixConnection::PosixConnection(int fd)
     : Connection(fd)
 {}
 
-UXConnection::~UXConnection() {
+PosixConnection::~PosixConnection() {
     disconnect();
 }
 
-void UXConnection::connect(Address const&) {
-    throw std::logic_error("`connect` member function of UXConnection class is not implemented");
+void PosixConnection::connect(Address const&) {
+    throw std::logic_error("`connect` member function of PosixConnection class is not implemented");
 }
 
-void UXConnection::disconnect() {
+void PosixConnection::disconnect() {
     if (socket_ != -1) {
         if (close(socket_) != 0)
             throw UnixException(errno);
@@ -27,7 +29,7 @@ void UXConnection::disconnect() {
     }
 }
 
-void UXConnection::send(const std::byte *data, uint64_t length) {
+void PosixConnection::send(std::byte const *data, uint64_t length) {
     int res;
     do {
         res = ::send(socket_, reinterpret_cast<const char*>(data), length, 0);
@@ -38,7 +40,7 @@ void UXConnection::send(const std::byte *data, uint64_t length) {
     } while (length > 0);
 }
 
-void UXConnection::recv(std::byte *data, uint64_t length) {
+void PosixConnection::recv(std::byte *data, uint64_t length) {
     int res;
     res = ::recv(socket_, reinterpret_cast<char*>(data), length, MSG_WAITALL);
     if (res == -1 || res == 0)

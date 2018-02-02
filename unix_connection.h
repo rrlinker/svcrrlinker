@@ -1,12 +1,16 @@
 #include <connection.h>
 
+#include <experimental/filesystem>
+
 #include <sys/socket.h>
 
-class UXConnection : public rrl::Connection {
-public:
-    UXConnection(int fd);
-    virtual ~UXConnection();
+namespace fs = std::experimental::filesystem;
 
+class UnixConnection : public rrl::Connection {
+public:
+    virtual ~UnixConnection();
+
+    void connect(fs::path const &path);
     virtual void connect(rrl::Address const &address) override;
     virtual void disconnect() override;
     virtual void send(std::byte const *data, size_t length) override;

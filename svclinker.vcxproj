@@ -92,15 +92,17 @@
     <ClCompile Include="librarian.cpp" />
     <ClCompile Include="library.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="posix_connection.cpp" />
+    <ClCompile Include="unix_connection.cpp" />
     <ClCompile Include="unix_exception.cpp" />
-    <ClCompile Include="ux_connection.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="coff.h" />
     <ClInclude Include="librarian.h" />
     <ClInclude Include="library.h" />
+    <ClInclude Include="posix_connection.h" />
+    <ClInclude Include="unix_connection.h" />
     <ClInclude Include="unix_exception.h" />
-    <ClInclude Include="ux_connection.h" />
   </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <ClCompile>
