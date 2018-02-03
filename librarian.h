@@ -25,6 +25,7 @@ private:
     void resolve_external_symbols(rrl::Courier &courier, Library &library);
     void perform_relocations(Library &library);
     void commit_memory_spaces(rrl::Courier &courier, Library &library);
+    void export_symbols(rrl::Courier &courier, Library &library);
     void execute_entry_point(rrl::Courier &courier, Library &library);
 
     rrl::Courier &resolver_courier;

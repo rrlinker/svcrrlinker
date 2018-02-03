@@ -78,6 +78,14 @@ void Library::perform_relocations() {
     }
 }
 
+void Library::export_symbols(std::function<void(std::string_view symbol_name, uint64_t address)> exporter) {
+    for (auto &coff : coffs_) {
+        for (auto const& [name, symbol] : coff.export_symbols()) {
+            exporter(name, coff.get_symbol_address_by_name(name));
+        }
+    }
+}
+
 void Library::commit_memory_spaces(std::function<void(uint64_t address, DWORD protection, std::vector<std::byte> const data)> performer) {
     for (auto &coff : coffs_) {
         for (auto &section : coff.sections()) {

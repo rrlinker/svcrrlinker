@@ -16,6 +16,7 @@ void Librarian::link(Courier &courier, Library &library) {
     resolve_external_symbols(courier, library);
     perform_relocations(library);
     commit_memory_spaces(courier, library);
+    export_symbols(courier, library);
     execute_entry_point(courier, library);
 
     msg::OK msg_ok;
@@ -64,6 +65,15 @@ void Librarian::commit_memory_spaces(rrl::Courier &courier, Library &library) {
         msg_commit_memory.body().protection = protection;
         msg_commit_memory.body().memory = data;
         courier.send(msg_commit_memory);
+    });
+}
+
+void Librarian::export_symbols(rrl::Courier &courier, Library &library) {
+    library.export_symbols([&courier](std::string_view symbol_name, uint64_t address) {
+        msg::ExportSymbol msg_export_symbol;
+        msg_export_symbol.body().symbol = sanitize_symbol(std::string(symbol_name));
+        msg_export_symbol.body().address = address;
+        courier.send(msg_export_symbol);
     });
 }
 
