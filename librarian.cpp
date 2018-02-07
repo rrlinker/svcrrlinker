@@ -65,6 +65,7 @@ void Librarian::commit_memory_spaces(rrl::Courier &courier, Library &library) {
         msg_commit_memory.body().protection = protection;
         msg_commit_memory.body().memory = data;
         courier.send(msg_commit_memory);
+        courier.receive().cast<msg::OK>();
     });
 }
 
