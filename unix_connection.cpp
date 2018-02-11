@@ -13,7 +13,9 @@ UnixConnection::~UnixConnection() {
     disconnect();
 }
 
-void UnixConnection::connect(fs::path const &path) {
+void UnixConnection::connect(rrl::Address const& address) {
+    auto const &path = address.path();
+
     if (path.string().length() > sizeof(sockaddr_un::sun_path)) {
         throw std::logic_error("unix socket path is too long");
     }
@@ -30,11 +32,6 @@ void UnixConnection::connect(fs::path const &path) {
     if (::connect(socket_, (sockaddr*)&addr, sizeof(addr)) < 0) {
         throw UnixException(errno);
     }
-}
-
-// TODO: change address to std::byte const* + size_t
-void UnixConnection::connect(rrl::Address const&) {
-    throw std::logic_error("`connect(rrl::Address const&)` member function of UnixConnection class is not implemented");
 }
 
 void UnixConnection::disconnect() {
