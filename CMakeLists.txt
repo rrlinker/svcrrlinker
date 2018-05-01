@@ -9,9 +9,7 @@ file(GLOB SOURCE_FILES
     "*.cpp"
 )
 
-set(LINK_LIBRARIES stdc++fs librlcom.a)
-
-link_directories(${PROJECT_SOURCE_DIR}/../librlcom/build)
+set(LINK_LIBRARIES stdc++fs)
 
 add_library(stdc++fs UNKNOWN IMPORTED)
 set_property(TARGET stdc++fs PROPERTY IMPORTED_LOCATION "/usr/lib/libstdc++fs.a")
