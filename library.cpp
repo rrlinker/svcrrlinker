@@ -1,4 +1,4 @@
-#include "library.h"
+#include "library.hpp"
 
 char const *Library::ENTRY_POINT_NAME = "_rrl_main@4";
 

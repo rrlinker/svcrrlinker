@@ -1,4 +1,4 @@
-#include "unix_exception.h"
+#include "unix_exception.hpp"
 
 #include <errno.h>
 #include <string.h>

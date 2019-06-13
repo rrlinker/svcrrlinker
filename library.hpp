@@ -3,10 +3,10 @@
 #include <vector>
 #include <unordered_map>
 #include <cstddef>
-#include <experimental/filesystem>
+#include <filesystem>
 #include <functional>
 
-#include "coff.h"
+#include "coff.hpp"
 
 namespace fs = std::experimental::filesystem;
 

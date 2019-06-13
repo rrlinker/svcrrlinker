@@ -1,4 +1,4 @@
-#include <connection.h>
+#include <librlcom/connection.hpp>
 
 #include <experimental/filesystem>
 

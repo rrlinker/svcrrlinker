@@ -1,7 +1,7 @@
 #include <iostream>
 
-#include "unix_connection.h"
-#include "unix_exception.h"
+#include "unix_connection.hpp"
+#include "unix_exception.hpp"
 
 #include <unistd.h>
 #include <sys/socket.h>

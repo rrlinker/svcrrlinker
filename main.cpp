@@ -3,17 +3,17 @@
 #include <vector>
 #include <string>
 #include <algorithm>
-#include <experimental/filesystem>
+#include <filesystem>
 
 #include <unistd.h>
 #include <fcntl.h>
 
-#include <courier.h>
-#include "unix_connection.h"
-#include "posix_connection.h"
-#include "librarian.h"
-#include "library.h"
-#include "coff.h"
+#include <librlcom/courier.hpp>
+#include "unix_connection.hpp"
+#include "posix_connection.hpp"
+#include "librarian.hpp"
+#include "library.hpp"
+#include "coff.hpp"
 
 using namespace rrl;
 namespace fs = std::experimental::filesystem;
