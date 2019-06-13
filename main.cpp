@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include <librlcom/courier.hpp>
+#include <librlcom/raw_courier.hpp>
 #include "unix_connection.hpp"
 #include "posix_connection.hpp"
 #include "librarian.hpp"
@@ -16,7 +16,6 @@
 #include "coff.hpp"
 
 using namespace rrl;
-namespace fs = std::experimental::filesystem;
 
 int main(int argc, const char *argv[]) {
     if (argc != 4) {
@@ -28,8 +27,8 @@ int main(int argc, const char *argv[]) {
 
     bool arguments_are_valid = true;
     int fd = atoi(argv[1]);
-    auto resolver_path = fs::path(argv[2]);
-    auto library_path = fs::path(argv[3]);
+    auto resolver_path = std::filesystem::path(argv[2]);
+    auto library_path = std::filesystem::path(argv[3]);
 
     if (!fd) {
         std::cerr << '`' << argv[1] << '`' << " is not a valid number of a file descriptor.\n";
@@ -42,12 +41,12 @@ int main(int argc, const char *argv[]) {
         arguments_are_valid = false;
     }
 
-    if (!fs::is_socket(resolver_path)) {
+    if (!std::filesystem::is_socket(resolver_path)) {
         std::cerr << '`' << resolver_path << '`' << " is not a valid path to unix socket.\n";
         arguments_are_valid = false;
     }
 
-    if (!fs::is_directory(library_path)) {
+    if (!std::filesystem::is_directory(library_path)) {
         std::cerr << '`' << library_path << '`' << " is not a valid path to a library directory.\n";
         arguments_are_valid = false;
     }
@@ -61,8 +60,8 @@ int main(int argc, const char *argv[]) {
         UnixConnection resolver_conn;
         resolver_conn.connect(resolver_path);
 
-        Courier courier(conn);
-        Courier resolver_courier(resolver_conn);
+        RawCourier courier(conn);
+        RawCourier resolver_courier(resolver_conn);
 
         msg::OK msg_ok;
         courier.send(msg_ok);

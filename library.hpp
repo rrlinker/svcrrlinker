@@ -8,11 +8,9 @@
 
 #include "coff.hpp"
 
-namespace fs = std::experimental::filesystem;
-
 class Library {
 public:
-    explicit Library(fs::path path);
+    explicit Library(std::filesystem::path path);
 
     void reserve_memory_spaces(std::function<uint64_t(uint64_t)> const &applier);
     void resolve_symbols_addresses();

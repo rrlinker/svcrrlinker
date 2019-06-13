@@ -2,7 +2,7 @@
 
 char const *Library::ENTRY_POINT_NAME = "_rrl_main@4";
 
-Library::Library(fs::path path)
+Library::Library(std::filesystem::path path)
     : path_(std::move(path))
 {
     for (auto &p : fs::directory_iterator(path_)) {

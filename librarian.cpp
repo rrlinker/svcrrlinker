@@ -38,7 +38,7 @@ void Librarian::resolve_external_symbols(Courier &courier, Library &library) {
         msg_resolve_symbol.library = library_name;
         msg_resolve_symbol.symbol = sanitize_symbol(std::string(symbol_name));
         courier.send(msg_resolve_symbol);
-        return courier.receive<msg::ResolvedSymbol>().value;
+        return courier.receive().cast<msg::ResolvedSymbol>().value;
     });
 }
 
@@ -47,7 +47,7 @@ void Librarian::reserve_memory_spaces(Courier &courier, Library &library) {
         msg::ReserveMemorySpace msg_reserve_memory_space;
         msg_reserve_memory_space.value = size;
         courier.send(msg_reserve_memory_space);
-        return courier.receive<msg::ReservedMemory>().value;
+        return courier.receive().cast<msg::ReservedMemory>().value;
     });
 }
 
@@ -62,7 +62,7 @@ void Librarian::commit_memory_spaces(Courier &courier, Library &library) {
         msg_commit_memory.protection = protection;
         msg_commit_memory.memory = data;
         courier.send(msg_commit_memory);
-        courier.receive<msg::OK>();
+        courier.receive().assert<msg::OK>();
     });
 }
 
@@ -81,14 +81,14 @@ void Librarian::execute_entry_point(Courier &courier, Library &library) {
         msg::Execute msg_execute;
         msg_execute.value = entry_point;
         courier.send(msg_execute);
-        courier.receive<msg::OK>();
+        courier.receive().assert<msg::OK>();
     }
 }
 
 std::string Librarian::get_symbol_library(std::string_view symbol_name) {
     msg::GetSymbolLibrary msg_get_symbol_library{std::string(symbol_name)};
     resolver_courier.send(msg_get_symbol_library);
-    return resolver_courier.receive<msg::ResolvedSymbolLibrary>();
+    return resolver_courier.receive().cast<msg::ResolvedSymbolLibrary>();
 }
 
 std::string Librarian::sanitize_symbol(std::string const &symbol_name) {
