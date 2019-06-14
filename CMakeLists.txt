@@ -23,8 +23,8 @@ set_target_properties(
 
 target_link_directories(
     ${PROJECT_NAME}
-    PRIVATE "../librlcom/build/${ARCH}/$<CONFIG>"
-    PRIVATE "../librlcrypto/build/${ARCH}/$<CONFIG>"
+    PRIVATE "../librlcom/build/${ARCH}"
+    PRIVATE "../librlcrypto/build/${ARCH}"
 )
 
 target_link_libraries(
