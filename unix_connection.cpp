@@ -54,9 +54,12 @@ void UnixConnection::send(std::byte const *data, uint64_t length) {
 }
 
 void UnixConnection::recv(std::byte *data, uint64_t length) {
-    int res;
-    res = ::recv(socket_, reinterpret_cast<char*>(data), length, MSG_WAITALL);
-    if (res == -1 || res == 0)
-        throw UnixException(errno);
+    while (length > 0) {
+        int res = ::recv(socket_, reinterpret_cast<char*>(data), static_cast<int>(length), 0);
+        if (res == -1 || res == 0)
+            throw UnixException(errno);
+        data += res;
+        length -= res;
+    }
 }
 
