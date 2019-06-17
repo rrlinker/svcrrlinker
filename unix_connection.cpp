@@ -1,7 +1,8 @@
 #include <iostream>
 
 #include "unix_connection.hpp"
-#include "unix_exception.hpp"
+
+#include <system_error>
 
 #include <unistd.h>
 #include <sys/socket.h>
@@ -22,7 +23,7 @@ void UnixConnection::connect(rrl::Address const& address) {
 
     socket_ = socket(AF_UNIX, SOCK_STREAM, 0);
     if (socket_ < 0) {
-        throw UnixException(errno);
+        throw std::system_error(errno, std::generic_category());
     }
 
     sockaddr_un addr = {};
@@ -30,14 +31,14 @@ void UnixConnection::connect(rrl::Address const& address) {
     strncpy(addr.sun_path, path.c_str(), sizeof(addr.sun_path));
 
     if (::connect(socket_, (sockaddr*)&addr, sizeof(addr)) < 0) {
-        throw UnixException(errno);
+        throw std::system_error(errno, std::generic_category());
     }
 }
 
 void UnixConnection::disconnect() {
     if (socket_ != -1) {
         if (close(socket_) != 0)
-            throw UnixException(errno);
+            throw std::system_error(errno, std::generic_category());
         socket_ = -1;
     }
 }
@@ -47,7 +48,7 @@ void UnixConnection::send(std::byte const *data, uint64_t length) {
     do {
         res = ::send(socket_, reinterpret_cast<const char*>(data), length, 0);
         if (res == -1)
-            throw UnixException(errno);
+            throw std::system_error(errno, std::generic_category());
         data += res;
         length -= res;
     } while (length > 0);
@@ -57,7 +58,7 @@ void UnixConnection::recv(std::byte *data, uint64_t length) {
     while (length > 0) {
         int res = ::recv(socket_, reinterpret_cast<char*>(data), static_cast<int>(length), 0);
         if (res == -1 || res == 0)
-            throw UnixException(errno);
+            throw std::system_error(errno, std::generic_category());
         data += res;
         length -= res;
     }
