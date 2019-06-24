@@ -5,9 +5,10 @@ char const *Library::ENTRY_POINT_NAME = "_rrl_main@4";
 Library::Library(std::filesystem::path path)
     : path_(std::move(path))
 {
-    for (auto &p : fs::directory_iterator(path_)) {
-        if (fs::is_regular_file(p))
+    for (auto &p : std::filesystem::directory_iterator(path_)) {
+        if (std::filesystem::is_regular_file(p) && p.path().extension() == ".obj") {
             coffs_.emplace_back(COFF(p));
+        }
     }
 }
 

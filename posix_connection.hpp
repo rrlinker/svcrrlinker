@@ -1,10 +1,8 @@
 #include <librlcom/connection.hpp>
 
-#include <experimental/filesystem>
+#include <filesystem>
 
 #include <sys/socket.h>
-
-namespace fs = std::experimental::filesystem;
 
 class PosixConnection : public rrl::Connection {
 public:

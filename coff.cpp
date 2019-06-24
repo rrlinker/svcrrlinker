@@ -7,7 +7,7 @@ std::istream& binary_read(std::istream &is, T &out) {
     return is.read(reinterpret_cast<char*>(&out), sizeof(T));
 }
 
-COFF::COFF(fs::path const &path)
+COFF::COFF(std::filesystem::path const &path)
 {
     file_.exceptions(std::ifstream::failbit | std::ifstream::badbit);
     file_.open(path);

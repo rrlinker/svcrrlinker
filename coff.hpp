@@ -8,11 +8,9 @@
 #include <memory>
 #include <unordered_map>
 #include <cstddef>
-#include <experimental/filesystem>
+#include <filesystem>
 
 #include "vendor/wine/windef.h"
-
-namespace fs = std::experimental::filesystem;
 
 class COFF {
     public:
@@ -29,7 +27,7 @@ class COFF {
             static DWORD const section2page_protection[2][2][2];
         };
 
-        explicit COFF(fs::path const &path);
+        explicit COFF(std::filesystem::path const &path);
 
         IMAGE_FILE_HEADER const& file_header() const { return file_header_; }
         std::vector<Section>& sections() { return sections_; }

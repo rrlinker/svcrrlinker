@@ -24,7 +24,7 @@ public:
 private:
     void fill_export_symbol_map();
 
-    fs::path path_;
+    std::filesystem::path path_;
 
     std::vector<COFF> coffs_;
     std::unordered_map<std::string_view, COFF&> export_symbol_map_;
