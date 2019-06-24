@@ -29,7 +29,7 @@ target_link_directories(
 
 target_link_libraries(
     ${PROJECT_NAME}
-    PRIVATE stdc++fs librlcom librlcrypto
+    PRIVATE stdc++fs librlcom librlcrypto crypto
 )
 
 target_include_directories(
