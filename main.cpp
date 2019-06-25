@@ -73,6 +73,7 @@ int main(int argc, const char *argv[]) {
         librarian.link(courier, library);
     } catch (std::exception const &e) {
         std::cerr << e.what() << '\n';
+        return -1;
     }
 
     return 0;
