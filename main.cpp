@@ -58,7 +58,7 @@ int main(int argc, const char *argv[]) {
         PosixConnection conn(fd);
 
         UnixConnection resolver_conn;
-        resolver_conn.connect(resolver_path);
+        resolver_conn.connect(Address{resolver_path});
 
         RawCourier courier(conn);
         RawCourier resolver_courier(resolver_conn);
