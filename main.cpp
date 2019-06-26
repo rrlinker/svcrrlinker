@@ -72,7 +72,7 @@ int main(int argc, const char *argv[]) {
             courier = std::make_unique<RawCourier>(conn);
         } else {
             auto crypto_courier = std::make_unique<CryptoCourier>(conn);
-            crypto_courier->init_as_server(bytes_from_hex_string(key));
+            crypto_courier->init_with_key(bytes_from_hex_string(key));
             courier = std::move(crypto_courier);
         }
         RawCourier resolver_courier(resolver_conn);
