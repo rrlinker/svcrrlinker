@@ -9,8 +9,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include <librlcom/raw_courier.hpp>
-#include <librlcrypto/crypto_courier.hpp>
+#include <librrlcom/raw_courier.hpp>
+#include <librrlcrypto/crypto_courier.hpp>
 #include "unix_connection.hpp"
 #include "posix_connection.hpp"
 #include "librarian.hpp"
@@ -22,7 +22,7 @@ using namespace rrl::rlc;
 
 int main(int argc, const char *argv[]) {
     if (argc < 4 || argc > 5) {
-        const char *program = argc > 0 ? argv[0] : "svclinker";
+        const char *program = argc > 0 ? argv[0] : "svcrrlinker";
         std::cerr << "usage: " << program << " <file descriptor of socket> <symbol resolver unix server> <library path> [key for crypto courier]\n"
             << "\tLinks (sends) specified library to the socket endpoint." << std::endl;
         return 1;
