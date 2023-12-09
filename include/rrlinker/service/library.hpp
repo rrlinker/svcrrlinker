@@ -1,12 +1,12 @@
 #pragma once
 
+#include <rrlinker/service/coff.hpp>
+
 #include <vector>
 #include <unordered_map>
 #include <cstddef>
 #include <filesystem>
 #include <functional>
-
-#include "coff.hpp"
 
 class Library {
 public:

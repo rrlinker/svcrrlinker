@@ -1,3 +1,14 @@
+#include <rrlinker/com/raw_courier.hpp>
+#include <rrlinker/crypto/crypto_courier.hpp>
+#include <rrlinker/service/unix_connection.hpp>
+#include <rrlinker/service/posix_connection.hpp>
+#include <rrlinker/service/librarian.hpp>
+#include <rrlinker/service/library.hpp>
+#include <rrlinker/service/coff.hpp>
+
+#include <unistd.h>
+#include <fcntl.h>
+
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -5,17 +16,6 @@
 #include <algorithm>
 #include <filesystem>
 #include <memory>
-
-#include <unistd.h>
-#include <fcntl.h>
-
-#include <librrlcom/raw_courier.hpp>
-#include <librrlcrypto/crypto_courier.hpp>
-#include "unix_connection.hpp"
-#include "posix_connection.hpp"
-#include "librarian.hpp"
-#include "library.hpp"
-#include "coff.hpp"
 
 using namespace rrl;
 using namespace rrl::rlc;

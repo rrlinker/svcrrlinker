@@ -1,16 +1,15 @@
 #pragma once
 
-#include <iostream>
+#include "vendor/wine/windef.h"
+
+#include <iosfwd>
 #include <fstream>
-#include <string>
 #include <string_view>
 #include <vector>
 #include <memory>
 #include <unordered_map>
 #include <cstddef>
 #include <filesystem>
-
-#include "vendor/wine/windef.h"
 
 class COFF {
     public:

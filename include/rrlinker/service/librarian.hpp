@@ -1,11 +1,11 @@
 #pragma once
 
+#include <rrlinker/com/courier.hpp>
+#include <rrlinker/service/library.hpp>
+
 #include <vector>
 #include <string>
 #include <cstddef>
-
-#include <librrlcom/courier.hpp>
-#include "library.hpp"
 
 class Librarian {
 public:

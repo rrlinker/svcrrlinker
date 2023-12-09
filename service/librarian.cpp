@@ -1,7 +1,7 @@
+#include <rrlinker/service/librarian.hpp>
+
 #include <iostream>
 #include <regex>
-
-#include "librarian.hpp"
 
 using namespace rrl;
 

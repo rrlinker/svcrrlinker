@@ -1,6 +1,6 @@
-#include <iostream>
+#include <rrlinker/service/coff.hpp>
 
-#include "coff.hpp"
+#include <iostream>
 
 template<typename T>
 std::istream& binary_read(std::istream &is, T &out) {

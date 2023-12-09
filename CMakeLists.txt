@@ -7,33 +7,29 @@ project(
     LANGUAGES CXX
 )
 
-include("${CMAKE_SOURCE_DIR}/../cmake/find_arch.cmake")
-
-file(GLOB SOURCE_FILES
-    "*.cpp"
+set(SOURCE_FILES
+    "service/coff.cpp"
+    "service/librarian.cpp"
+    "service/posix_connection.cpp"
+    "service/unix_connection.cpp"
+    "service/library.cpp"
+    "service/main.cpp"
 )
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
 set_target_properties(
     ${PROJECT_NAME} PROPERTIES
-    CXX_STANDARD 17
+    CXX_STANDARD 20
     CXX_STANDARD_REQUIRED ON
-)
-
-target_link_directories(
-    ${PROJECT_NAME}
-    PRIVATE "../librrlcom/build/${ARCH}"
-    PRIVATE "../librrlcrypto/build/${ARCH}"
-)
-
-target_link_libraries(
-    ${PROJECT_NAME}
-    PRIVATE stdc++fs librrlcom librrlcrypto crypto
 )
 
 target_include_directories(
     ${PROJECT_NAME}
-    PRIVATE "${PROJECT_SOURCE_DIR}/vendor/wine"
-    PRIVATE "${PROJECT_SOURCE_DIR}/.."
+    PUBLIC include "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+
+target_link_libraries(
+    ${PROJECT_NAME}
+    PUBLIC stdc++fs librrlcom librrlcrypto
 )
