@@ -35,9 +35,14 @@ set_target_properties(
     CXX_STANDARD_REQUIRED ON
 )
 
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+    NOMINMAX
+)
+
 target_include_directories(${PROJECT_NAME} PUBLIC
-    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
-    "$<INSTALL_INTERFACE:include>"
+    include
+    vendor/wine
+    .
 )
 
 target_link_libraries(
@@ -48,5 +53,5 @@ target_link_libraries(
 include(GNUInstallDirs)
 install(
     TARGETS ${PROJECT_NAME}
-    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}/rrlinker/service"
+    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
 )
