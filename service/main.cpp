@@ -53,11 +53,6 @@ int main(int argc, const char *argv[]) {
         arguments_are_valid = false;
     }
 
-    if (!std::filesystem::is_directory(library_path)) {
-        std::cerr << '`' << library_path << '`' << " is not a valid path to a library directory.\n";
-        arguments_are_valid = false;
-    }
-
     if (!arguments_are_valid)
         return 2;
 

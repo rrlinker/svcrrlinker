@@ -5,10 +5,20 @@ char const *Library::ENTRY_POINT_NAME = "_rrl_main@4";
 Library::Library(std::filesystem::path path)
     : path_(std::move(path))
 {
-    for (auto &p : std::filesystem::directory_iterator(path_)) {
-        if (std::filesystem::is_regular_file(p) && p.path().extension() == ".obj") {
-            coffs_.emplace_back(COFF(p));
+    if (std::filesystem::is_directory(path_)) {
+        for (auto &p : std::filesystem::directory_iterator(path_)) {
+            if (std::filesystem::is_regular_file(p) && p.path().extension() == ".obj") {
+                coffs_.emplace_back(COFF(p));
+            }
         }
+    } else {
+        if (std::filesystem::is_regular_file(path_) && path_.extension() == ".obj") {
+            coffs_.emplace_back(COFF(path_));
+        }
+    }
+    if (coffs_.empty())
+    {
+        throw std::runtime_error("invalid library");
     }
 }
 
